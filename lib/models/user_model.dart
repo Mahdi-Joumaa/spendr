@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 //defining a class to know what attributes will user have and what my data looks like
 class UserModel {
-
   //attributes
   late final String uid;
   late final String name;
@@ -16,9 +15,9 @@ class UserModel {
     required this.uid,
     required this.name,
     required this.email,
-    required this.currency, 
+    required this.currency,
     required this.monthlyBudget,
-    required this.createdAt
+    required this.createdAt,
   });
 
   //converting data to map (firebase -> dart)
@@ -35,7 +34,7 @@ class UserModel {
     );
   }
 
- //converting data to map (dart -> firebase)
+  //converting data to map (dart -> firebase)
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -47,5 +46,9 @@ class UserModel {
     };
   }
 
-
+  //For testing
+  @override
+  String toString() {
+    return 'UserModel(uid: $uid, name: $name, email: $email, currency: $currency, monthlyBudget: $monthlyBudget)';
+  }
 }

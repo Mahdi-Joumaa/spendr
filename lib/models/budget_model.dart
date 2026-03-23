@@ -40,6 +40,10 @@ class BudgetModel {
       'createdAt': createdAt,
     };
   }
+
+  //for testing
+  @override
+  String toString() {
+    return 'BudgetModel(categoryId: $categoryId, name: $name, icon: $icon, colorHex: $colorHex, budgetLimit: $budgetLimit)';
+  }
 }
-
-

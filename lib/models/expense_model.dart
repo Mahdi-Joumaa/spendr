@@ -44,4 +44,10 @@ class ExpenseModel {
       'createdAt': createdAt,
     };
   }
+
+  //For testing
+  @override
+  String toString() {
+    return 'ExpenseModel(expenseId: $expenseId, amount: $amount, categoryId: $categoryId, note: $note, month: $month)';
+  }
 }
