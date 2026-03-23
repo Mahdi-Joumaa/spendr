@@ -35,10 +35,10 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginScreen(),
         '/signup': (context) => SignupScreen(),
         '/dashboard': (context) => DashboardScreen(),
-        '/add-expense': (context) => AddExpenseScreen(),
-        '/history': (context) => HistoryScreen(),
-        '/budgets': (context) => BudgetsScreen(),
-        '/profile': (context) => ProfileScreen(),
+        // '/add-expense': (context) => AddExpenseScreen(),
+        // '/history': (context) => HistoryScreen(),
+        // '/budgets': (context) => BudgetsScreen(),
+        // '/profile': (context) => ProfileScreen(),
       },
     );
   }
