@@ -6,7 +6,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(Scaffold());
+  runApp(MaterialApp());
 }
 
 
