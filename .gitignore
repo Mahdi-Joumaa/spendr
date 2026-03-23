@@ -1,0 +1,70 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+android/app/google-services.json
+lib/firebase_options.dart
+
+# Firebase iOS config
+ios/Runner/GoogleService-Info.plist
+
+# Environment / secrets files
+.env
+.env.*
+*.env
+
+# Firebase web config
+web/firebase-config.js
+
+# macOS
+**/.DS_Store
+
+# VS Code settings
+.vscode/
+
+# Flutter sensitive generated files (safety net)
+google-services.json
+GoogleService-Info.plist
+
+# Firebase CLI config
+firebase.json
+.firebaserc
+.firebase/
