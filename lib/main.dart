@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +16,7 @@ import 'screens/profile/profile_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await FirebaseAuth.instance.signOut();
   runApp(
     ProviderScope(
       child: MyApp(),
@@ -35,9 +37,9 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginScreen(),
         '/signup': (context) => SignupScreen(),
         '/dashboard': (context) => DashboardScreen(),
-        // '/add-expense': (context) => AddExpenseScreen(),
-        // '/history': (context) => HistoryScreen(),
-        // '/budgets': (context) => BudgetsScreen(),
+        '/add_expense': (context) => AddExpenseScreen(),
+        '/history': (context) => HistoryScreen(),
+        //'/budgets': (context) => BudgetsScreen(),
         // '/profile': (context) => ProfileScreen(),
       },
     );

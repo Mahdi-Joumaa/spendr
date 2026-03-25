@@ -9,14 +9,14 @@ import 'package:spendr/widgets/spendr_app_bar.dart';
 import 'package:spendr/widgets/bottom_nav_bar.dart';
 import 'package:intl/intl.dart';
 
-class DashboardScreen extends ConsumerStatefulWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+class BudgetScreen extends ConsumerStatefulWidget {
+  const BudgetScreen({Key? key}) : super(key: key);
 
   @override
-  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<BudgetScreen> createState() => _BudgetScreenState();
 }
 
-class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+class _BudgetScreenState extends ConsumerState<BudgetScreen> {
   @override
   Widget build(BuildContext context) {
     final expenses = ref.watch(expensesProvider);
