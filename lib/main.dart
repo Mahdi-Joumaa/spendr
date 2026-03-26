@@ -16,7 +16,7 @@ import 'screens/profile/profile_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await FirebaseAuth.instance.signOut();
+  // await FirebaseAuth.instance.signOut();
   runApp(
     ProviderScope(
       child: MyApp(),
@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
         '/dashboard': (context) => DashboardScreen(),
         '/add_expense': (context) => AddExpenseScreen(),
         '/history': (context) => HistoryScreen(),
-        //'/budgets': (context) => BudgetsScreen(),
+        '/budgets': (context) => BudgetScreen(),
         // '/profile': (context) => ProfileScreen(),
       },
     );
