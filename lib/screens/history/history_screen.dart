@@ -21,39 +21,93 @@ class HistoryScreen extends ConsumerStatefulWidget {
 class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   String _searchQuery = '';
   late String _selectedMonth;
-  List<ExpenseModel> _monthExpenses = [];
-  bool _isLoadingMonth = false;
-  final _expenseService = ExpenseService();
+  // Changed from late to nullable to prevent initialization errors
+  Stream<List<ExpenseModel>>? _monthStream;
 
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
-    _selectedMonth =
-        '${now.year}-${now.month.toString().padLeft(2, '0')}';
+    _selectedMonth = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+
+    // Initialize immediately instead of waiting for post-frame callback
+    _updateStream();
   }
 
-  // format month string to display
+  void _updateStream() {
+    final uid = ref.read(authStateProvider).value?.uid;
+    if (uid == null) return;
+
+    setState(() {
+      _monthStream = ExpenseService().getExpensesByMonth(uid, _selectedMonth);
+    });
+  }
+
   String _formatMonthDisplay(String month) {
     final parts = month.split('-');
     final date = DateTime(int.parse(parts[0]), int.parse(parts[1]));
     return DateFormat('MMMM yyyy').format(date);
   }
 
-  // navigate months
+  bool _isCurrentMonth() {
+    final now = DateTime.now();
+    final current = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+    return _selectedMonth == current;
+  }
+
   void _changeMonth(int direction) {
     final parts = _selectedMonth.split('-');
     var year = int.parse(parts[0]);
     var month = int.parse(parts[1]);
     month += direction;
-    if (month > 12) { month = 1; year++; }
-    if (month < 1) { month = 12; year--; }
+    if (month > 12) {
+      month = 1;
+      year++;
+    }
+    if (month < 1) {
+      month = 12;
+      year--;
+    }
     setState(() {
       _selectedMonth = '$year-${month.toString().padLeft(2, '0')}';
     });
+    _updateStream();
   }
 
-  // group expenses by date
+  Future<void> _pickMonth() async {
+    final parts = _selectedMonth.split('-');
+    final initialDate = DateTime(int.parse(parts[0]), int.parse(parts[1]));
+    final now = DateTime.now();
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2024, 1),
+      lastDate: DateTime(now.year, now.month),
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppColors.primary,
+              surface: AppColors.card,
+              onSurface: AppColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedMonth =
+            '${picked.year}-${picked.month.toString().padLeft(2, '0')}';
+      });
+      _updateStream();
+    }
+  }
+
   Map<String, List<ExpenseModel>> _groupByDate(List<ExpenseModel> expenses) {
     final Map<String, List<ExpenseModel>> grouped = {};
     for (final e in expenses) {
@@ -63,7 +117,6 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     return grouped;
   }
 
-  // get friendly date label
   String _getDateLabel(String dateKey) {
     final date = DateTime.parse(dateKey);
     final now = DateTime.now();
@@ -75,7 +128,6 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     return DateFormat('MMMM d').format(date);
   }
 
-  // get peak day
   MapEntry<String, double>? _getPeakDay(List<ExpenseModel> expenses) {
     final Map<String, double> dailyTotals = {};
     for (final e in expenses) {
@@ -86,24 +138,20 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     return dailyTotals.entries.reduce((a, b) => a.value > b.value ? a : b);
   }
 
-  // build bar chart data
   List<BarChartGroupData> _buildBarGroups(List<ExpenseModel> expenses) {
     final Map<int, double> dailyTotals = {};
     for (final e in expenses) {
       dailyTotals[e.date.day] = (dailyTotals[e.date.day] ?? 0) + e.amount;
     }
-
     final peakDay = _getPeakDay(expenses);
     final peakDayNumber = peakDay != null
         ? DateTime.parse(peakDay.key).day
         : -1;
-
     final parts = _selectedMonth.split('-');
     final daysInMonth = DateUtils.getDaysInMonth(
       int.parse(parts[0]),
       int.parse(parts[1]),
     );
-
     return List.generate(daysInMonth, (index) {
       final day = index + 1;
       final amount = dailyTotals[day] ?? 0;
@@ -124,43 +172,54 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final expenses = ref.watch(expensesProvider);
-    final uid = ref.watch(authStateProvider).value?.uid;
     final formatter = NumberFormat('#,##0.00');
     final formatterShort = NumberFormat('#,##0');
 
     return Scaffold(
-      appBar: SpendrAppBar(),
-      bottomNavigationBar: BottomNavBar(currentIndex: 1),
-      body: expenses.when(
-        data: (allExpenses) {
-          // filter by selected month
-          final monthExpenses = _selectedMonth ==
-                  ref.read(currentMonthProvider)
-              ? allExpenses
-              : allExpenses
-                  .where((e) => e.month == _selectedMonth)
-                  .toList();
+      appBar: const SpendrAppBar(),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 1),
+      body: StreamBuilder<List<ExpenseModel>>(
+        stream: _monthStream,
+        builder: (context, snapshot) {
+          // Check for null stream or connection waiting
+          if (_monthStream == null ||
+              snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-          // filter by search
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'Error loading history',
+                style: TextStyle(color: AppColors.danger),
+              ),
+            );
+          }
+
+          final monthExpenses = snapshot.data ?? [];
+
           final filtered = _searchQuery.isEmpty
               ? monthExpenses
               : monthExpenses
-                  .where((e) =>
-                      e.note
-                          .toLowerCase()
-                          .contains(_searchQuery.toLowerCase()) ||
-                      e.categoryId
-                          .toLowerCase()
-                          .contains(_searchQuery.toLowerCase()))
-                  .toList();
+                    .where(
+                      (e) =>
+                          e.note.toLowerCase().contains(
+                            _searchQuery.toLowerCase(),
+                          ) ||
+                          e.categoryId.toLowerCase().contains(
+                            _searchQuery.toLowerCase(),
+                          ),
+                    )
+                    .toList();
 
           final grouped = _groupByDate(filtered);
           final sortedKeys = grouped.keys.toList()
             ..sort((a, b) => b.compareTo(a));
 
-          final totalOutflow =
-              monthExpenses.fold(0.0, (sum, e) => sum + e.amount);
+          final totalOutflow = monthExpenses.fold(
+            0.0,
+            (sum, e) => sum + e.amount,
+          );
           final daysWithExpenses = monthExpenses
               .map((e) => DateFormat('yyyy-MM-dd').format(e.date))
               .toSet()
@@ -171,25 +230,22 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
           final peakDay = _getPeakDay(monthExpenses);
           final barGroups = _buildBarGroups(monthExpenses);
+
           final maxY = monthExpenses.isEmpty
               ? 100.0
               : monthExpenses
-                      .fold(
-                          <String, double>{},
-                          (map, e) {
-                            final key =
-                                DateFormat('yyyy-MM-dd').format(e.date);
-                            map[key] = (map[key] ?? 0) + e.amount;
-                            return map;
-                          })
-                      .values
-                      .reduce((a, b) => a > b ? a : b) *
-                  1.2;
+                        .fold(<String, double>{}, (map, e) {
+                          final key = DateFormat('yyyy-MM-dd').format(e.date);
+                          map[key] = (map[key] ?? 0) + e.amount;
+                          return map;
+                        })
+                        .values
+                        .reduce((a, b) => a > b ? a : b) *
+                    1.2;
 
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-
               // ── MONTH SELECTOR ───────────────────
               Text(
                 'VIEWING ACTIVITY',
@@ -199,32 +255,69 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Month Display (Left)
                   GestureDetector(
-                    onTap: () => _changeMonth(-1),
-                    child: Icon(
-                      Icons.chevron_left,
-                      color: AppColors.textSecondary,
+                    onTap: _pickMonth,
+                    child: Row(
+                      children: [
+                        Text(
+                          _formatMonthDisplay(_selectedMonth),
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.keyboard_arrow_down,
+                          color: AppColors.textSecondary,
+                        ),
+                      ],
                     ),
                   ),
-                  Text(
-                    _formatMonthDisplay(_selectedMonth),
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+
+                  // Navigation Arrows (Right - Grouped Together)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.keyboard_arrow_down,
-                    color: AppColors.textSecondary,
+                    child: Row(
+                      children: [
+                        // Back Arrow
+                        IconButton(
+                          onPressed: () => _changeMonth(-1),
+                          icon: const Icon(Icons.chevron_left),
+                          color: AppColors.textPrimary,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        // Vertical Divider Line
+                        Container(
+                          height: 20,
+                          width: 1,
+                          color: AppColors.textSecondary.withOpacity(0.2),
+                        ),
+                        // Forward Arrow
+                        IconButton(
+                          onPressed: _isCurrentMonth()
+                              ? null
+                              : () => _changeMonth(1),
+                          icon: const Icon(Icons.chevron_right),
+                          color: _isCurrentMonth()
+                              ? AppColors.textSecondary.withOpacity(0.3)
+                              : AppColors.textPrimary,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-
               const SizedBox(height: 16),
 
               // ── SEARCH BAR ───────────────────────
@@ -289,8 +382,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                 ),
                               ),
                               Text(
-                                DateFormat('MMMM d ·').format(
-                                    DateTime.parse(peakDay.key)),
+                                DateFormat(
+                                  'MMMM d ·',
+                                ).format(DateTime.parse(peakDay.key)),
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: AppColors.danger,
@@ -309,57 +403,69 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                           ),
                       ],
                     ),
-
                     const SizedBox(height: 20),
-
-                    // bar chart
                     SizedBox(
                       height: 120,
-                      child: BarChart(
-                        BarChartData(
-                          barGroups: barGroups,
-                          maxY: maxY,
-                          gridData: FlGridData(show: false),
-                          borderData: FlBorderData(show: false),
-                          titlesData: FlTitlesData(
-                            leftTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false),
-                            ),
-                            rightTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false),
-                            ),
-                            topTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false),
-                            ),
-                            bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                getTitlesWidget: (value, meta) {
-                                  // only show MAR 01, MAR 10, MAR 20, MAR 31
-                                  final day = value.toInt();
-                                  if (day == 1 || day == 10 || day == 20 || day == 31) {
-                                    final parts = _selectedMonth.split('-');
-                                    final date = DateTime(
-                                      int.parse(parts[0]),
-                                      int.parse(parts[1]),
-                                      day,
-                                    );
-                                    return Text(
-                                      DateFormat('MMM dd').format(date).toUpperCase(),
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    );
-                                  }
-                                  return const SizedBox.shrink();
-                                },
+                      child: monthExpenses.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No data for this month',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            )
+                          : BarChart(
+                              BarChartData(
+                                barGroups: barGroups,
+                                maxY: maxY,
+                                gridData: const FlGridData(show: false),
+                                borderData: FlBorderData(show: false),
+                                titlesData: FlTitlesData(
+                                  leftTitles: const AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false),
+                                  ),
+                                  rightTitles: const AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false),
+                                  ),
+                                  topTitles: const AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false),
+                                  ),
+                                  bottomTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      getTitlesWidget: (value, meta) {
+                                        final day = value.toInt();
+                                        if (day == 1 ||
+                                            day == 10 ||
+                                            day == 20 ||
+                                            day == 31) {
+                                          final parts = _selectedMonth.split(
+                                            '-',
+                                          );
+                                          final date = DateTime(
+                                            int.parse(parts[0]),
+                                            int.parse(parts[1]),
+                                            day,
+                                          );
+                                          return Text(
+                                            DateFormat(
+                                              'MMM dd',
+                                            ).format(date).toUpperCase(),
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          );
+                                        }
+                                        return const SizedBox.shrink();
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                barTouchData: BarTouchData(enabled: false),
                               ),
                             ),
-                          ),
-                          barTouchData: BarTouchData(enabled: false),
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -394,7 +500,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(20),
@@ -424,7 +532,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                       text: TextSpan(
                         children: [
                           TextSpan(
-                            text: '\$${formatterShort.format(totalOutflow.truncate())}',
+                            text:
+                                '\$${formatterShort.format(totalOutflow.truncate())}',
                             style: TextStyle(
                               fontSize: 36,
                               fontWeight: FontWeight.bold,
@@ -432,7 +541,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                             ),
                           ),
                           TextSpan(
-                            text: '.${(totalOutflow % 1 * 100).toStringAsFixed(0).padLeft(2, '0')}',
+                            text:
+                                '.${(totalOutflow % 1 * 100).toStringAsFixed(0).padLeft(2, '0')}',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -475,7 +585,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 32),
                     child: Text(
-                      'No transactions found',
+                      monthExpenses.isEmpty
+                          ? 'No transactions this month'
+                          : 'No results found',
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
                   ),
@@ -483,15 +595,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               else
                 ...sortedKeys.map((dateKey) {
                   final dayExpenses = grouped[dateKey]!;
-                  final dayTotal =
-                      dayExpenses.fold(0.0, (sum, e) => sum + e.amount);
+                  final dayTotal = dayExpenses.fold(
+                    0.0,
+                    (sum, e) => sum + e.amount,
+                  );
                   final label = _getDateLabel(dateKey);
                   final isPeakDay = peakDay?.key == dateKey;
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // date header
                       Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: Row(
@@ -520,7 +633,6 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                           ],
                         ),
                       ),
-                      // expense tiles
                       ...dayExpenses.map(
                         (expense) => ExpenseTile(expense: expense),
                       ),
@@ -533,13 +645,6 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Text(
-            'Error loading history',
-            style: TextStyle(color: AppColors.danger),
-          ),
-        ),
       ),
     );
   }
