@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
         '/add_expense': (context) => AddExpenseScreen(),
         '/history': (context) => HistoryScreen(),
         '/budgets': (context) => BudgetScreen(),
-        // '/profile': (context) => ProfileScreen(),
+        '/profile': (context) => ProfileScreen(),
       },
     );
   }
