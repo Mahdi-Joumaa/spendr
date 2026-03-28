@@ -54,7 +54,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         : (totalSpent / monthlyBudget * 100);
 
     return Scaffold(
-      appBar: SpendrAppBar(title: 'Spendr'),
+      appBar: SpendrAppBar(),
       bottomNavigationBar: BottomNavBar(currentIndex: 0),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.pushNamed(context, '/add_expense'),

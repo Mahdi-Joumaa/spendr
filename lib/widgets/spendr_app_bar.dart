@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import '../utils/theme.dart';
 
 class SpendrAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
-  final VoidCallback? onMenuTap;
   final VoidCallback? onNotificationTap;
 
   const SpendrAppBar({
     Key? key,
-    required this.title,
-    this.onMenuTap,
     this.onNotificationTap,
   }) : super(key: key);
 
@@ -21,21 +17,41 @@ class SpendrAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: AppColors.background,
       elevation: 0,
-      leading: IconButton(
-        icon: Icon(Icons.menu, color: AppColors.primary),
-        onPressed: onMenuTap ?? () {},
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: AppColors.primary,
-          fontWeight: FontWeight.bold,
-          fontSize: 20,
-        ),
+      automaticallyImplyLeading: false,
+      title: Row(
+        children: [
+          // wallet icon
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.account_balance_wallet,
+              color: Color(0xFF0D2B22),
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 10),
+          // app name
+          Text(
+            'Spendr',
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+          ),
+        ],
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.notifications_outlined, color: AppColors.textPrimary),
+          icon: Icon(
+            Icons.notifications_outlined,
+            color: AppColors.textPrimary,
+          ),
           onPressed: onNotificationTap ?? () {},
         ),
       ],

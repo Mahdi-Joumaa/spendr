@@ -130,7 +130,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final formatterShort = NumberFormat('#,##0');
 
     return Scaffold(
-      appBar: SpendrAppBar(title: 'SPENDR'),
+      appBar: SpendrAppBar(),
       bottomNavigationBar: BottomNavBar(currentIndex: 1),
       body: expenses.when(
         data: (allExpenses) {

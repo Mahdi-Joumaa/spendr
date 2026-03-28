@@ -203,7 +203,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         : (totalSpent / monthlyBudget).clamp(0.0, 1.0);
 
     return Scaffold(
-      appBar: SpendrAppBar(title: 'Spendr'),
+      appBar: SpendrAppBar(),
       bottomNavigationBar: BottomNavBar(currentIndex: 3),
       body: SafeArea(
         child: SingleChildScrollView(

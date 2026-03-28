@@ -102,7 +102,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     final formatter = NumberFormat('#,##0');
 
     return Scaffold(
-      appBar: SpendrAppBar(title: 'Spendr'),
+      appBar: SpendrAppBar(),
       bottomNavigationBar: BottomNavBar(currentIndex: 2),
       body: SafeArea(
         child: SingleChildScrollView(
