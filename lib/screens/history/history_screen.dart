@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/expense_provider.dart';
 import '../../models/expense_model.dart';
 import '../../services/expense_service.dart';
 import '../../utils/theme.dart';

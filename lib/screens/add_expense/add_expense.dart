@@ -4,7 +4,6 @@ import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 import '../../models/expense_model.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/expense_provider.dart';
 import '../../services/expense_service.dart';
 import '../../utils/theme.dart';
 
