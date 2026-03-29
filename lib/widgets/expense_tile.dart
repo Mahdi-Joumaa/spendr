@@ -13,8 +13,6 @@ class ExpenseTile extends StatelessWidget {
       case 'food': return Icons.restaurant;
       case 'transport': return Icons.directions_car;
       case 'shopping': return Icons.shopping_bag;
-      case 'bills': return Icons.receipt;
-      case 'entertainment': return Icons.movie;
       case 'health': return Icons.favorite;
       default: return Icons.more_horiz;
     }

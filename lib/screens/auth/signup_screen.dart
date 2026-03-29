@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/auth_service.dart';
 import '../../utils/theme.dart';
 
@@ -19,6 +20,71 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  Future<void> _showBudgetDialog(String uid) async {
+    final controller = TextEditingController();
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Set Your Monthly Budget',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'How much do you plan to spend each month?',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: 'e.g. 2000',
+                prefixText: '\$ ',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () async {
+              final budget = double.tryParse(controller.text);
+              if (budget == null || budget <= 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a valid amount')),
+                );
+                return;
+              }
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(uid)
+                  .update({'monthlyBudget': budget});
+
+              if (mounted) {
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, '/dashboard');
+              }
+            },
+            child: const Text('Get Started'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _signUp() async {
     if (_nameController.text.isEmpty ||
         _emailController.text.isEmpty ||
@@ -31,25 +97,28 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      await _authService.signUp(
+      final user = await _authService.signUp(
         _nameController.text.trim(),
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
-      Navigator.pushReplacementNamed(context, '/dashboard');
+
+      if (user != null && mounted) {
+        await _showBudgetDialog(user.uid);
+      }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
     } finally {
       setState(() => _isLoading = false);
     }
@@ -105,7 +174,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // title
                     Text(
                       'Create Account',
                       style: TextStyle(
@@ -264,6 +332,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
 
                     const SizedBox(height: 28),
+
                     Center(
                       child: Text(
                         'SECURE ENROLLMENT',
@@ -275,7 +344,9 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 28,),
+
+                    const SizedBox(height: 28),
+
                     // login link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -285,8 +356,8 @@ class _SignupScreenState extends State<SignupScreen> {
                           style: TextStyle(color: AppColors.textPrimary),
                         ),
                         GestureDetector(
-                          onTap: () =>
-                              Navigator.pushReplacementNamed(context, '/login'),
+                          onTap: () => Navigator.pushReplacementNamed(
+                              context, '/login'),
                           child: Text(
                             'Login',
                             style: TextStyle(
@@ -301,11 +372,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ),
 
-              const SizedBox(height: 28),
-
-              const SizedBox(height: 24),
-
-              // privacy policy
+              const SizedBox(height: 48),
             ],
           ),
         ),
