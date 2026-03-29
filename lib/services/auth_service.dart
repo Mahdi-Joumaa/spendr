@@ -41,6 +41,7 @@ class AuthService {
   // Auth state stream
   Stream<User?> get authState => _auth.authStateChanges();
 
+  // Seed 7 default budget categories on signup
   Future<void> _seedDefaultBudgets(String uid) async {
     final defaults = [
       {
@@ -63,6 +64,20 @@ class AuthService {
         'icon': 'shopping_bag',
         'colorHex': '#FF79C6',
         'budgetLimit': 300.0,
+      },
+      {
+        'categoryId': 'bills',
+        'name': 'Bills',
+        'icon': 'receipt',
+        'colorHex': '#FFB020',
+        'budgetLimit': 400.0,
+      },
+      {
+        'categoryId': 'entertainment',
+        'name': 'Entertainment',
+        'icon': 'movie',
+        'colorHex': '#BD93F9',
+        'budgetLimit': 150.0,
       },
       {
         'categoryId': 'health',
