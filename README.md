@@ -313,7 +313,7 @@ The monthly budget is set once by the user and stays fixed. Category limits are 
 
 ## 👨‍💻 Built By
 
-Mahdi — built from scratch without following tutorials.
+Mahdi — built from scratch.
 Designed in Stitch. Coded in Flutter. Powered by Firebase.
 
 ---
