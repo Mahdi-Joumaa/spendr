@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_any_logo/flutter_logo.dart';
 import '../../services/auth_service.dart';
 import '../../utils/theme.dart';
 
@@ -33,9 +34,24 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       Navigator.pushReplacementNamed(context, '/dashboard');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future <void> _loginWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.signInWithGoogle();
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -74,10 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // tagline
               Text(
                 'Enter your sanctuary of financial clarity.',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
               ),
 
               const SizedBox(height: 32),
@@ -135,7 +148,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         hintText: 'name@domain.com',
-                        prefixIcon: Icon(Icons.mail_outline, color: AppColors.textSecondary),
+                        prefixIcon: Icon(
+                          Icons.mail_outline,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
 
@@ -177,13 +193,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         hintText: '••••••••',
-                        prefixIcon: Icon(Icons.lock_outline, color: AppColors.textSecondary),
+                        prefixIcon: Icon(
+                          Icons.lock_outline,
+                          color: AppColors.textSecondary,
+                        ),
                         suffixIcon: GestureDetector(
                           onTap: () {
-                            setState(() => _obscurePassword = !_obscurePassword);
+                            setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            );
                           },
                           child: Icon(
-                            _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -199,7 +222,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _login,
                         child: _isLoading
-                            ? const CircularProgressIndicator(color: Colors.black)
+                            ? const CircularProgressIndicator(
+                                color: Colors.black,
+                              )
                             : const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -210,12 +235,62 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                       ),
                     ),
+
+                    const SizedBox(height: 24),
+
+                    // divider with "or"
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Divider(color: AppColors.textSecondary),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'OR',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 24,),
+
+                    // Google button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0D1117),
+                        ),
+                        onPressed: _isLoading ? null : _loginWithGoogle,
+                        child: _isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.black,
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 90,
+                                    height: 58,
+                                    child: AnyLogo.tech.google.image(),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
                   ],
                 ),
               ),
 
               const SizedBox(height: 28),
-
               // sign up link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

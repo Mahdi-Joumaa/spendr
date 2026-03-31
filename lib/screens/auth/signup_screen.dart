@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_any_logo/flutter_logo.dart';
 import '../../services/auth_service.dart';
 import '../../utils/theme.dart';
 
@@ -19,6 +20,22 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+
+  
+  Future <void> _signUpWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.signInWithGoogle();
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   Future<void> _showBudgetDialog(String uid) async {
     final controller = TextEditingController();
@@ -346,6 +363,55 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
 
                     const SizedBox(height: 28),
+
+                    // divider with "or"
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Divider(color: AppColors.textSecondary),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'OR',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 24,),
+
+                    // Google button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0D1117),
+                        ),
+                        onPressed: _isLoading ? null : _signUpWithGoogle,
+                        child: _isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.black,
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 90,
+                                    height: 58,
+                                    child: AnyLogo.tech.google.image(),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
 
                     // login link
                     Row(

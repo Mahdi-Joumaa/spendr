@@ -230,6 +230,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_any_logo:
+    dependency: "direct main"
+    description:
+      name: flutter_any_logo
+      sha256: "3e54565cb79ec760ce2fde7a7cc0cadbe687e704a51ac47df2d6d08c37d6dc6b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.2"
   flutter_lints:
     dependency: "direct dev"
     description:
