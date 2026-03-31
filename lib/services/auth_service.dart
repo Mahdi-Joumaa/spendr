@@ -8,9 +8,7 @@ class AuthService {
   final _db = FirebaseFirestore.instance;
   final _googleSignIn = GoogleSignIn();
 
-
-
-   // Google Sign-In);
+  // Google Sign-In);
 
   //sign up
   Future<UserModel?> signUp(String name, String email, String password) async {
@@ -41,8 +39,45 @@ class AuthService {
     );
   }
 
+  // Google Sign-In
+  Future<UserCredential?> signInWithGoogle() async {
+    final googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) return null; // User canceled the sign-in
+
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final userCredential = await _auth.signInWithCredential(credential);
+
+    // Check if user document exists, if not create it
+    final userDoc = await _db
+        .collection('users')
+        .doc(userCredential.user!.uid)
+        .get();
+    if (!userDoc.exists) {
+      final newUser = UserModel(
+        uid: userCredential.user!.uid,
+        name: userCredential.user!.displayName ?? 'Google User',
+        email: userCredential.user!.email ?? '',
+        currency: 'USD',
+        monthlyBudget: 2000,
+        createdAt: DateTime.now(),
+      );
+      await _db.collection('users').doc(newUser.uid).set(newUser.toMap());
+      await _seedDefaultBudgets(newUser.uid);
+    }
+
+    return userCredential;
+  }
+
   // Logout
-  Future<void> logout() async => await _auth.signOut();
+  Future<void> logout() async {
+    await _auth.signOut();
+    await _googleSignIn.signOut();
+  }
 
   // Auth state stream
   Stream<User?> get authState => _auth.authStateChanges();
