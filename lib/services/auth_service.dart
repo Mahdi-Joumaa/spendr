@@ -40,7 +40,7 @@ class AuthService {
   }
 
   // Google Sign-In
-  Future<UserCredential?> signInWithGoogle() async {
+  Future<UserModel?> signInWithGoogle() async {
     final googleUser = await _googleSignIn.signIn();
     if (googleUser == null) return null; // User canceled the sign-in
 
@@ -68,10 +68,10 @@ class AuthService {
       );
       await _db.collection('users').doc(newUser.uid).set(newUser.toMap());
       await _seedDefaultBudgets(newUser.uid);
+      return newUser;
     }
 
-    return userCredential;
-  }
+    return UserModel.fromMap((await _db.collection('users').doc(userCredential.user!.uid).get()).data()!);}
 
   // Logout
   Future<void> logout() async {

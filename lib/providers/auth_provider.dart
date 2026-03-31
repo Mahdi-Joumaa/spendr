@@ -19,3 +19,8 @@ final currentUserProvider = FutureProvider<UserModel?>((ref) async {
       .get();
   return UserModel.fromMap(doc.data()!);
 });
+
+final signInWithGoogleProvider = FutureProvider<UserModel?>((ref) async {
+  final authService = ref.watch(authServiceProvider);
+  return await authService.signInWithGoogle();
+});
