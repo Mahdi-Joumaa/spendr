@@ -23,18 +23,19 @@ class _SignupScreenState extends State<SignupScreen> {
 
   
   Future <void> _signUpWithGoogle() async {
-    setState(() => _isLoading = true);
-
-    try {
-      await _authService.signInWithGoogle();
-      Navigator.pushReplacementNamed(context, '/dashboard');
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
-    } finally {
-      setState(() => _isLoading = false);
-    }
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Under Construction'),
+        content: const Text('Google sign-up is under construction.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _showBudgetDialog(String uid) async {
