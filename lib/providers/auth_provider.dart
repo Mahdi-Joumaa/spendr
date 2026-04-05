@@ -17,6 +17,7 @@ final currentUserProvider = FutureProvider<UserModel?>((ref) async {
       .collection('users')
       .doc(user.uid)
       .get();
+  if (!doc.exists || doc.data() == null) return null;
   return UserModel.fromMap(doc.data()!);
 });
 

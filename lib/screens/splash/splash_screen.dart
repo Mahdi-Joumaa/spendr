@@ -15,7 +15,11 @@ class SplashScreen extends ConsumerWidget {
         if (user != null) {
           // logged in → redirect to dashboard automatically
           WidgetsBinding.instance.addPostFrameCallback(
-            (_) => Navigator.pushReplacementNamed(context, '/dashboard'),
+            (_) {
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, '/dashboard');
+              }
+            },
           );
         }
         // not logged in → just show the splash, wait for button tap

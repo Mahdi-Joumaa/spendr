@@ -185,7 +185,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _logout(BuildContext context) async {
     await _authService.logout();
-    Navigator.pushReplacementNamed(context, '/');
+    
+    if (!mounted) return;
+    
+    // Use Navigator.of with rootNavigator to bypass any nested navigators
+    Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+      '/',
+      (route) => false,
+    );
   }
 
   String _getInitials(String name) {
